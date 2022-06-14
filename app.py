@@ -73,9 +73,9 @@ def plot_text(x, y, plotarea=st, figx=6, figy=3,
     plotarea.pyplot(f)
 
 
-def get_gcode(x, y, g):
-    lines = [f"{gg}  X{xx:.5f}  Y{yy:.5f}" for (gg, xx, yy) in zip(
-        g, x, y)]
+def get_gcode(x, y, g, c):
+    lines = [f"{gg}  X{xx:.5f}  Y{yy:.5f}  {cc}" for (gg, xx, yy, cc) in zip(
+        g, x, y, c)]
     return("\n".join(lines))
 
 bt, plotarea = st.columns([1, 6])
@@ -102,19 +102,21 @@ figx = bt.number_input("Figure size (x)", value=6)
 figy = bt.number_input("Figure size (y)", value=3)
 
 gs = gcode.split("\n")
-g,x,y = [],[],[]
+g,x,y,c = [],[],[],[]
 for i in range(len(gs)):
-    if len(gs[i].split(" "))==3:
-        gg, xx, yy = gs[i].split(" ")
+    if len(gs[i].split(" "))==4:
+        gg, xx, yy, cc = gs[i].split(" ")
         g.append(gg)
         x.append(float(xx.replace("X", "")))
         y.append(float(yy.replace("Y", "")))
+        c.append(cc)
 
 x = np.array(x)*factor
 x = x+(XMIN+XMAX)/2 - (max(x)+min(x))/2 + shiftX
 y = np.array(y)*factor
 y = y+(YMIN+YMAX)/2 - (max(y)+min(y))/2 + shiftY
 g = np.array(g)
+c = np.array(c)
 
 if 'zoom' not in st.session_state:
     st.session_state.zoom = 0
@@ -125,6 +127,6 @@ plot_text(x, y, plotarea, figx, figy, XMIN, XMAX,
           YMIN, YMAX, st.session_state.zoom)
 
 bt.download_button("Download GCODE",
-                           data = get_gcode(x, y, g),
+                           data = get_gcode(x, y, g, c),
                            file_name='GCODE.txt',
                            mime='text/csv')

@@ -72,7 +72,7 @@ def textToGcode(letters, text, lineLength, lineSpacing, padding):
 	offsetX, offsetY = 0, 0
 	for char in text:
 		letter = letters[char].translated(offsetX, offsetY)
-		gcodeLettersArray.append(repr(letter))
+		gcodeLettersArray.append(repr(letter).replace("\n", f" #{char}\n"))
 
 		offsetX += letter.width + padding
 		if offsetX >= lineLength:
