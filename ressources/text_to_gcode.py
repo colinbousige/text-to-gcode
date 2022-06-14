@@ -67,11 +67,25 @@ def readLetters(directory):
     return letters
 
 def reverse(mylet):
-    stext = mylet.split("\n")
+    stext = mylet.split("\n")[:-1]
     rtext = np.flip(stext)
-    return("\n".join(rtext))
+    return("\n".join(rtext)+"\n")
 
-def textToGcode(letters, text, lineLength, lineSpacing, padding, repeat=1):
+
+def repeat(mylet, N):
+    out = mylet
+    if N > 1:
+        i = 1
+        while i < N:
+            if i % 2 == 1:
+                out += reverse(mylet)
+            else:
+                out += mylet
+            i += 1
+    return(out)
+
+
+def textToGcode(letters, text, lineLength, lineSpacing, padding, N=1):
     # used for fast string concatenation
     gcodeLettersArray = []
 
@@ -79,15 +93,7 @@ def textToGcode(letters, text, lineLength, lineSpacing, padding, repeat=1):
     for char in text:
         letter = letters[char].translated(offsetX, offsetY)
         mylet = repr(letter).replace("\n", f" #{char}\n")
-        gcodeLettersArray.append(mylet)
-        if repeat > 1:
-            i = 1
-            while i < repeat:
-                if i % 2 == 1:
-                    gcodeLettersArray.append(reverse(mylet))
-                else:
-                    gcodeLettersArray.append(mylet)
-                i += 1
+        gcodeLettersArray.append(repeat(mylet, N))
 
         offsetX += letter.width + padding
         if offsetX >= lineLength:
