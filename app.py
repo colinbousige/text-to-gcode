@@ -84,8 +84,9 @@ data = st.sidebar.text_area("Enter your text here:", "Sample text")
 line_length = st.sidebar.slider("Line Length:", value=100, min_value=0, max_value=1000)
 height = st.sidebar.slider("Line Height:", value=10, min_value=0, max_value=1000)
 padding = st.sidebar.slider("Padding:", value=3, min_value=-100, max_value=100)
-factor = st.sidebar.number_input("Font size factor:", value=1.0, min_value=0.0)
 col1, col2 = st.sidebar.columns(2)
+factor = col1.number_input("Font size factor:", value=1.0, min_value=0.0)
+N = col2.number_input("Number of layer per letter:", value=10, min_value=1, key="N")
 shiftX = col1.number_input("Shift X:", value=0.0, key="shiftx")
 shiftY = col2.number_input("Shift Y:", value=0.0, key="shifty")
 
@@ -96,7 +97,7 @@ XMAX = col2.number_input("X max:", value=350., step=1., key="lines_XMAX")
 YMIN = col1.number_input("Y min:", value=50., step=1., key="lines_YMIN")
 YMAX = col2.number_input("Y max:", value=350., step=1., key="lines_YMAX")
 
-gcode = textToGcode(letters, data, line_length, height, padding)
+gcode = textToGcode(letters, data, line_length, height, padding, N)
 
 figx = bt.number_input("Figure size (x)", value=6)
 figy = bt.number_input("Figure size (y)", value=3)
@@ -117,6 +118,7 @@ y = np.array(y)*factor
 y = y+(YMIN+YMAX)/2 - (max(y)+min(y))/2 + shiftY
 g = np.array(g)
 c = np.array(c)
+
 
 if 'zoom' not in st.session_state:
     st.session_state.zoom = 0
