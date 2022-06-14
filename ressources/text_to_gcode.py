@@ -72,7 +72,7 @@ def reverse(mylet):
     return("\n".join(rtext)+"\n")
 
 
-def repeat(mylet, N):
+def repeat(mylet, N, baseline=0):
     out = mylet
     if N > 1:
         i = 1
@@ -82,10 +82,21 @@ def repeat(mylet, N):
             else:
                 out += mylet
             i += 1
-    return(out)
+    gs = out.split("\n")[:-1]
+    g, x, y, c = [], [], [], []
+    for i in range(len(gs)):
+        if len(gs[i].split(" ")) == 4:
+            gg, xx, yy, cc = gs[i].split(" ")
+            g.append(gg)
+            x.append(float(xx.replace("X", "")))
+            y.append(float(yy.replace("Y", "")))
+            c.append(cc)
+    x = np.array(x)
+    y = np.array(y)
+    return(f"G0 X{min(x):.5f} Y{baseline:.5f} {c[0]}\n{out}G0 X{max(x):.5f} Y{baseline:.5f} {c[0]}\n")
 
 
-def textToGcode(letters, text, lineLength, lineSpacing, padding, N=1):
+def textToGcode(letters, text, lineLength, lineSpacing, padding, N=1, baseline=0):
     # used for fast string concatenation
     gcodeLettersArray = []
 
@@ -93,7 +104,10 @@ def textToGcode(letters, text, lineLength, lineSpacing, padding, N=1):
     for char in text:
         letter = letters[char].translated(offsetX, offsetY)
         mylet = repr(letter).replace("\n", f" #{char}\n")
-        gcodeLettersArray.append(repeat(mylet, N))
+        if char != " ":
+            gcodeLettersArray.append(repeat(mylet, N, baseline))
+        else:
+            gcodeLettersArray.append(mylet)
 
         offsetX += letter.width + padding
         if offsetX >= lineLength:

@@ -81,11 +81,13 @@ def get_gcode(x, y, g, c):
 bt, plotarea = st.columns([1, 4])
 
 data = st.sidebar.text_area("Enter your text here:", "Sample text")
-line_length = st.sidebar.slider("Line Length:", value=100, min_value=0, max_value=1000)
-height = st.sidebar.slider("Line Height:", value=10, min_value=0, max_value=1000)
-padding = st.sidebar.slider("Padding:", value=3, min_value=-100, max_value=100)
 col1, col2 = st.sidebar.columns(2)
-factor = col1.number_input("Font size factor:", value=4.0, min_value=0.0)
+line_length = col1.number_input("Line Length:", value=100., min_value=0., max_value=1000.)
+height = col2.number_input("Line Height:", value=10., min_value=0., max_value=1000.)
+padding = col1.number_input("Padding:", value=3., key="pad")
+baseline = col2.number_input(
+    "Baseline:", value=0., min_value=-10., max_value=10., key="base")
+factor = col1.number_input("Font size factor:", value=4.0, min_value=0.0, key="factor")
 N = col2.number_input("Number of layer per letter:", value=11, min_value=1, key="N")
 shiftX = col1.number_input("Shift X:", value=0.0, key="shiftx")
 shiftY = col2.number_input("Shift Y:", value=0.0, key="shifty")
@@ -97,15 +99,15 @@ XMAX = col2.number_input("X max:", value=350., step=1., key="lines_XMAX")
 YMIN = col1.number_input("Y min:", value=50., step=1., key="lines_YMIN")
 YMAX = col2.number_input("Y max:", value=350., step=1., key="lines_YMAX")
 
-gcode = textToGcode(letters, data, line_length, height, padding, N)
+gcode = textToGcode(letters, data, line_length, height, padding, N, baseline)
 
 figx = bt.number_input("Figure size (x)", value=6)
 figy = bt.number_input("Figure size (y)", value=3)
 
-gs = gcode.split("\n")
+gs = gcode.split("\n")[:-1]
 g,x,y,c = [],[],[],[]
 for i in range(len(gs)):
-    if len(gs[i].split(" "))==4:
+    if (len(gs[i].split(" "))==4):
         gg, xx, yy, cc = gs[i].split(" ")
         g.append(gg)
         x.append(float(xx.replace("X", "")))
@@ -118,7 +120,6 @@ y = np.array(y)*factor
 y = y+(YMIN+YMAX)/2 - (max(y)+min(y))/2 + shiftY
 g = np.array(g)
 c = np.array(c)
-
 
 if 'zoom' not in st.session_state:
     st.session_state.zoom = 0
