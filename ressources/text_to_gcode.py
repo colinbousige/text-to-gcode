@@ -66,6 +66,7 @@ def readLetters(directory):
             letters[letterRepr] = letter
     return letters
 
+
 def reverse(mylet):
     stext = mylet.split("\n")[:-1]
     rtext = np.flip(stext)
@@ -73,27 +74,30 @@ def reverse(mylet):
 
 
 def repeat(mylet, N, baseline=0):
-    out = mylet
-    if N > 1:
-        i = 1
-        while i < N:
-            if i % 2 == 1:
-                out += reverse(mylet)
-            else:
-                out += mylet
-            i += 1
-    gs = out.split("\n")[:-1]
-    g, x, y, c = [], [], [], []
-    for i in range(len(gs)):
-        if len(gs[i].split(" ")) == 4:
-            gg, xx, yy, cc = gs[i].split(" ")
-            g.append(gg)
-            x.append(float(xx.replace("X", "")))
-            y.append(float(yy.replace("Y", "")))
-            c.append(cc)
-    x = np.array(x)
-    y = np.array(y)
-    return(f"G0 X{min(x):.5f} Y{baseline:.5f} {c[0]}\n{out}G0 X{max(x):.5f} Y{baseline:.5f} {c[0]}\n")
+    if mylet is not "\n":
+        out = mylet
+        if N > 1:
+            i = 1
+            while i < N:
+                if i % 2 == 1:
+                    out += reverse(mylet)
+                else:
+                    out += mylet
+                i += 1
+        gs = out.split("\n")[:-1]
+        g, x, y, c = [], [], [], []
+        for i in range(len(gs)):
+            if len(gs[i].split(" ")) == 4:
+                gg, xx, yy, cc = gs[i].split(" ")
+                g.append(gg)
+                x.append(float(xx.replace("X", "")))
+                y.append(float(yy.replace("Y", "")))
+                c.append(cc)
+        x = np.array(x)
+        y = np.array(y)
+        return(f"G0 X{min(x):.5f} Y{baseline:.5f} {c[0]}\n{out}G0 X{max(x):.5f} Y{baseline:.5f} {c[0]}\n")
+    else:
+        return(mylet)
 
 
 def textToGcode(letters, text, lineLength, lineSpacing, padding, N=1, baseline=0):
@@ -105,7 +109,8 @@ def textToGcode(letters, text, lineLength, lineSpacing, padding, N=1, baseline=0
         letter = letters[char].translated(offsetX, offsetY)
         mylet = repr(letter).replace("\n", f" #{char}\n")
         if char != " ":
-            gcodeLettersArray.append(repeat(mylet, N, baseline))
+            if char != "\n":
+                gcodeLettersArray.append(repeat(mylet, N, baseline + offsetY))
         else:
             gcodeLettersArray.append(mylet)
 
