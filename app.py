@@ -86,7 +86,7 @@ height = st.sidebar.slider("Line Height:", value=10, min_value=0, max_value=1000
 padding = st.sidebar.slider("Padding:", value=3, min_value=-100, max_value=100)
 col1, col2 = st.sidebar.columns(2)
 factor = col1.number_input("Font size factor:", value=1.0, min_value=0.0)
-N = col2.number_input("Number of layer per letter:", value=10, min_value=1, key="N")
+N = col2.number_input("Number of layer per letter:", value=11, min_value=1, key="N")
 shiftX = col1.number_input("Shift X:", value=0.0, key="shiftx")
 shiftY = col2.number_input("Shift Y:", value=0.0, key="shifty")
 
