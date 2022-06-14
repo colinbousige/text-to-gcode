@@ -26,7 +26,26 @@ st.set_page_config(
     }
 )
 
-def plot_text(x, y, plotarea, figx=6, figy=3):
+st.title("Simple G-Code creator for text writing")
+
+st.markdown(
+    """
+    <style>
+    [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
+        width: 400px;
+    }
+    [data-testid="stSidebar"][aria-expanded="false"] > div:first-child {
+        width: 400px;
+        margin-left: -400px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+
+def plot_text(x, y, plotarea=st, figx=6, figy=3, 
+              XMIN=0, XMAX=100, YMIN=0, YMAX=100, zoom=0):
     """
     Plots the text with color ranging from green to red for the printing order
     """
@@ -41,33 +60,71 @@ def plot_text(x, y, plotarea, figx=6, figy=3):
     f.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
     ax1 = f.add_subplot(1, 1, 1)
     ax1.add_collection(lc)
+    ax1.plot([XMIN, XMAX, XMAX, XMIN, XMIN],
+             [YMIN, YMIN, YMAX, YMAX, YMIN], c='black', linewidth=3, zorder=1)
     ax1.axis('off')
-    ax1.set_xlim(min(x)-5, max(x)+5)
-    ax1.set_ylim(min(y), max(y))
+    if zoom:
+        ax1.set_xlim(min(x), max(x))
+        ax1.set_ylim(min(y), max(y))
+    else:
+        ax1.set_xlim(XMIN, XMAX)
+        ax1.set_ylim(YMIN, YMAX)
     ax1.set_aspect('equal', 'datalim')
     plotarea.pyplot(f)
 
-data = st.sidebar.text_area("Enter your text here:", "Sample text", height=200)
-line_length = st.sidebar.slider("Line Length", value=100, min_value=0, max_value=1000)
-height = st.sidebar.slider("Line Height", value=10, min_value=0, max_value=1000)
-padding = st.sidebar.slider("Padding", value=3, min_value=-100, max_value=100)
-gcode = textToGcode(letters, data, line_length, height, padding)
-left, right = st.sidebar.columns(2)
-figx = left.number_input("Figure size (x)", value=6)
-figy = right.number_input("Figure size (y)", value=3)
 
+def get_gcode(x, y, g):
+    lines = [f"{gg}  X{xx:.5f}  Y{yy:.5f}" for (gg, xx, yy) in zip(
+        g, x, y)]
+    return("\n".join(lines))
+
+bt, plotarea = st.columns([1, 6])
+
+data = st.sidebar.text_area("Enter your text here:", "Sample text")
+line_length = st.sidebar.slider("Line Length:", value=100, min_value=0, max_value=1000)
+height = st.sidebar.slider("Line Height:", value=10, min_value=0, max_value=1000)
+padding = st.sidebar.slider("Padding:", value=3, min_value=-100, max_value=100)
+factor = st.sidebar.number_input("Font size factor:", value=1.0, min_value=0.0)
+col1, col2 = st.sidebar.columns(2)
+shiftX = col1.number_input("Shift X:", value=0.0, key="shiftx")
+shiftY = col2.number_input("Shift Y:", value=0.0, key="shifty")
+
+st.sidebar.title("Definition of printing area:")
+col1, col2 = st.sidebar.columns(2)
+XMIN = col1.number_input("X min:", value=50., step=1., key="lines_XMIN")
+XMAX = col2.number_input("X max:", value=350., step=1., key="lines_XMAX")
+YMIN = col1.number_input("Y min:", value=50., step=1., key="lines_YMIN")
+YMAX = col2.number_input("Y max:", value=350., step=1., key="lines_YMAX")
+
+gcode = textToGcode(letters, data, line_length, height, padding)
+
+figx = bt.number_input("Figure size (x)", value=6)
+figy = bt.number_input("Figure size (y)", value=3)
 
 gs = gcode.split("\n")
 g,x,y = [],[],[]
 for i in range(len(gs)):
     if len(gs[i].split(" "))==3:
         gg, xx, yy = gs[i].split(" ")
+        g.append(gg)
         x.append(float(xx.replace("X", "")))
         y.append(float(yy.replace("Y", "")))
 
-plot_text(x, y, st, figx, figy)
+x = np.array(x)*factor
+x = x+(XMIN+XMAX)/2 - (max(x)+min(x))/2 + shiftX
+y = np.array(y)*factor
+y = y+(YMIN+YMAX)/2 - (max(y)+min(y))/2 + shiftY
+g = np.array(g)
 
-st.sidebar.download_button("Download GCODE",
-                           data = gcode,
-                           file_name='GCODE.nc',
+if 'zoom' not in st.session_state:
+    st.session_state.zoom = 0
+if bt.button("Zoom in/out", key="lines_zoom"):
+    st.session_state.zoom = (st.session_state.zoom + 1) % 2
+
+plot_text(x, y, plotarea, figx, figy, XMIN, XMAX,
+          YMIN, YMAX, st.session_state.zoom)
+
+bt.download_button("Download GCODE",
+                           data = get_gcode(x, y, g),
+                           file_name='GCODE.txt',
                            mime='text/csv')
