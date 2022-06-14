@@ -78,7 +78,7 @@ def get_gcode(x, y, g, c):
         g, x, y, c)]
     return("\n".join(lines))
 
-bt, plotarea = st.columns([1, 6])
+bt, plotarea = st.columns([1, 4])
 
 data = st.sidebar.text_area("Enter your text here:", "Sample text")
 line_length = st.sidebar.slider("Line Length:", value=100, min_value=0, max_value=1000)
