@@ -74,7 +74,7 @@ def reverse(mylet):
 
 
 def repeat(mylet, N, baseline=0):
-    if mylet is not "\n":
+    if mylet != "\n":
         out = mylet
         if N > 1:
             i = 1
