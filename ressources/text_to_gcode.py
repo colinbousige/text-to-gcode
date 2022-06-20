@@ -67,6 +67,7 @@ def readLetters(directory):
     return letters
 
 
+
 def reverse(mylet):
     stext = mylet.split("\n")[:-1]
     rtext = np.flip(stext)

@@ -44,6 +44,8 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 def plot_text(x, y, plotarea=st, figx=6, figy=3, 
               XMIN=0, XMAX=100, YMIN=0, YMAX=100, zoom=0):
@@ -74,13 +76,34 @@ def plot_text(x, y, plotarea=st, figx=6, figy=3,
     plotarea.pyplot(f)
 
 
+def gcode2xyg(gcode, factor, shiftX, shiftY, XMIN, XMAX, YMIN, YMAX):
+    gs = gcode.split("\n")[:-1]
+    g, x, y, c = [], [], [], []
+    for i in range(len(gs)):
+        if (len(gs[i].split(" ")) == 4):
+            gg, xx, yy, cc = gs[i].split(" ")
+            g.append(gg)
+            x.append(float(xx.replace("X", "")))
+            y.append(float(yy.replace("Y", "")))
+            c.append(cc)
+    x = np.array(x)*factor
+    x = x+(XMIN+XMAX)/2 - (max(x)+min(x))/2 + shiftX
+    y = np.array(y)*factor
+    y = y+(YMIN+YMAX)/2 - (max(y)+min(y))/2 + shiftY
+    g = np.array(g)
+    c = np.array(c)
+    return((g,x,y,c))
+
+
 def get_gcode(x, y, g, c):
     lines = [f"{gg}  X{xx:.5f}  Y{yy:.5f}  {cc}" for (gg, xx, yy, cc) in zip(
         g, x, y, c)]
     return("\n".join(lines))
 
-bt, plotarea = st.columns([1, 4])
-
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# Graphical interface
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# Sidebar
 data = st.sidebar.text_area("Enter your text here:", "Sample text")
 col1, col2 = st.sidebar.columns(2)
 height = col2.number_input("Line Height:", value=10., min_value=0., max_value=1000.)
@@ -91,7 +114,6 @@ shiftX = col1.number_input("Shift X:", value=0.0, key="shiftx")
 shiftY = col2.number_input("Shift Y:", value=0.0, key="shifty")
 N = st.sidebar.number_input(
     "Number of layer per letter:", value=11, min_value=1, key="N")
-
 st.sidebar.title("Definition of printing area:")
 col1, col2 = st.sidebar.columns(2)
 XMIN = col1.number_input("X min:", value=50., step=1., key="lines_XMIN")
@@ -99,37 +121,22 @@ XMAX = col2.number_input("X max:", value=350., step=1., key="lines_XMAX")
 YMIN = col1.number_input("Y min:", value=50., step=1., key="lines_YMIN")
 YMAX = col2.number_input("Y max:", value=350., step=1., key="lines_YMAX")
 
-gcode = textToGcode(letters, data, (XMAX - XMIN)/factor*.95, height, padding, N, baseline)
-
+# Main area
+bt, plotarea = st.columns([1, 4])
 figx = bt.number_input("Figure size (x)", value=6)
 figy = bt.number_input("Figure size (y)", value=3)
-
-gs = gcode.split("\n")[:-1]
-g,x,y,c = [],[],[],[]
-for i in range(len(gs)):
-    if (len(gs[i].split(" "))==4):
-        gg, xx, yy, cc = gs[i].split(" ")
-        g.append(gg)
-        x.append(float(xx.replace("X", "")))
-        y.append(float(yy.replace("Y", "")))
-        c.append(cc)
-
-x = np.array(x)*factor
-x = x+(XMIN+XMAX)/2 - (max(x)+min(x))/2 + shiftX
-y = np.array(y)*factor
-y = y+(YMIN+YMAX)/2 - (max(y)+min(y))/2 + shiftY
-g = np.array(g)
-c = np.array(c)
-
 if 'zoom' not in st.session_state:
     st.session_state.zoom = 0
 if bt.button("Zoom in/out", key="lines_zoom"):
     st.session_state.zoom = (st.session_state.zoom + 1) % 2
 
+# Operations
+gcode = textToGcode(letters, data, (XMAX - XMIN)/factor*.95, height, padding, N, baseline)
+g, x, y, c = gcode2xyg(gcode, factor, shiftX, shiftY, XMIN, XMAX, YMIN, YMAX)
 plot_text(x, y, plotarea, figx, figy, XMIN, XMAX,
           YMIN, YMAX, st.session_state.zoom)
 
 bt.download_button("Download GCODE",
-                           data = get_gcode(x, y, g, c),
-                           file_name='GCODE.txt',
-                           mime='text/csv')
+                    data = get_gcode(x, y, g, c),
+                    file_name='GCODE.txt',
+                    mime='text/csv')
